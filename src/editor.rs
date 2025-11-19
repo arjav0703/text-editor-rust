@@ -56,7 +56,7 @@ impl Editor {
 
         if !self.running {
             Terminal::clear_screen()?;
-            println!("byeeeeee")
+            Terminal::print("Goodbye!\n")?;
         } else {
             self.draw_tildes()?;
             Terminal::move_cursor_to(Coords::index())?;
