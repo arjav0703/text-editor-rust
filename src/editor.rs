@@ -3,7 +3,7 @@ use crossterm::{
     cursor::MoveTo,
     event::{Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read},
     execute,
-    terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode},
+    terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
 };
 use std::io::stdout;
 
@@ -18,17 +18,18 @@ impl Editor {
     }
 
     pub fn run(&mut self) -> Result<()> {
-        Self::clear_screen()?;
+        Terminal::clear_screen()?;
         enable_raw_mode()?;
 
         loop {
-            let event = read()?;
-            self.evaluate_event(&event);
             self.refresh_screen()?;
 
             if !self.running {
                 break;
             }
+
+            let event = read()?;
+            self.evaluate_event(&event);
         }
         disable_raw_mode()?;
         Ok(())
@@ -48,18 +49,40 @@ impl Editor {
         }
     }
 
-    fn clear_screen() -> Result<()> {
-        let mut stdout = stdout();
-        execute!(stdout, MoveTo(0, 0))?;
-        execute!(stdout, Clear(ClearType::All))?;
+    fn refresh_screen(&self) -> Result<()> {
+        if !self.running {
+            Terminal::clear_screen()?;
+            println!("byeeeeee")
+        } else {
+            self.draw_tildes()?;
+            Terminal::move_cursor_to(0, 0)?;
+        }
         Ok(())
     }
 
-    fn refresh_screen(&self) -> Result<()> {
-        if !self.running {
-            Self::clear_screen()?;
-            println!("byeeeeee")
+    fn draw_tildes(&self) -> Result<()> {
+        let (height, _width) = Terminal::size()?;
+        for current_row in 0..height {
+            print!("~");
+            if current_row + 1 < height {
+                print!("\r\n");
+            }
         }
         Ok(())
+    }
+}
+
+struct Terminal {}
+impl Terminal {
+    pub fn clear_screen() -> Result<()> {
+        execute!(stdout(), Clear(ClearType::All))?;
+        Ok(())
+    }
+    pub fn move_cursor_to(x: u16, y: u16) -> Result<()> {
+        execute!(stdout(), MoveTo(x, y))?;
+        Ok(())
+    }
+    pub fn size() -> Result<(u16, u16)> {
+        Ok(size()?)
     }
 }
