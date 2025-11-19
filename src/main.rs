@@ -1,3 +1,8 @@
+use std::io::{self, Read, Write};
+
 fn main() {
-    println!("Hello, world!");
+    for c in io::stdin().bytes() {
+        let c = c.unwrap() as char;
+        println!("{}", c);
+    }
 }
