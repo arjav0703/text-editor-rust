@@ -1,8 +1,10 @@
 use anyhow::Result;
 use crossterm::{
     cursor::MoveTo,
+    cursor::{Hide, Show},
     event::{Event, Event::Key, KeyCode::Char, KeyEvent, KeyModifiers, read},
-    execute,
+    execute, queue,
+    style::Print,
     terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
 };
 use std::io::stdout;
@@ -50,6 +52,8 @@ impl Editor {
     }
 
     fn refresh_screen(&self) -> Result<()> {
+        Terminal::hide_cursor()?;
+
         if !self.running {
             Terminal::clear_screen()?;
             println!("byeeeeee")
@@ -57,12 +61,14 @@ impl Editor {
             self.draw_tildes()?;
             Terminal::move_cursor_to(Coords::index())?;
         }
+        Terminal::show_cursor()?;
         Ok(())
     }
 
     fn draw_tildes(&self) -> Result<()> {
         let Size { height, width: _w } = Terminal::size()?;
         for current_row in 0..height {
+            Terminal::clear_line()?;
             print!("~");
             if current_row + 1 < height {
                 print!("\r\n");
@@ -90,6 +96,10 @@ impl Coords {
 
 struct Terminal {}
 impl Terminal {
+    pub fn clear_line() -> Result<()> {
+        queue!(stdout(), Clear(ClearType::CurrentLine))?;
+        Ok(())
+    }
     pub fn clear_screen() -> Result<()> {
         execute!(stdout(), Clear(ClearType::All))?;
         Ok(())
@@ -103,5 +113,19 @@ impl Terminal {
         let (width, height) = size()?;
         let size = Size { height, width };
         Ok(size)
+    }
+
+    pub fn hide_cursor() -> Result<()> {
+        queue!(stdout(), Hide)?;
+        Ok(())
+    }
+    pub fn show_cursor() -> Result<()> {
+        queue!(stdout(), Show)?;
+        Ok(())
+    }
+
+    pub fn print(string: &str) -> Result<()> {
+        queue!(stdout(), Print(string))?;
+        Ok(())
     }
 }
