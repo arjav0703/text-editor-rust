@@ -14,13 +14,10 @@ use crossterm::{
 use std::io::{Write, stdout};
 mod terminal;
 use terminal::Terminal;
-mod view;
+pub mod view;
 use view::View;
+use view::buffer::Buffer;
 
-#[derive(Debug, Clone, Default)]
-pub struct Buffer {
-    pub content: Vec<String>,
-}
 pub struct Size {
     pub height: u16,
     pub width: u16,
@@ -42,7 +39,6 @@ impl Coords {
 pub struct Editor {
     pub running: bool,
     pub position: Coords,
-    pub buffer: Buffer,
     pub view: View,
 }
 
@@ -55,7 +51,6 @@ impl Default for Editor {
         Self {
             running: true,
             position: Coords::index(),
-            buffer: test_buffer.clone(),
             view: View {
                 buffer: test_buffer,
             },

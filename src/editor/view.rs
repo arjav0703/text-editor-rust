@@ -1,4 +1,5 @@
 use super::*;
+pub mod buffer;
 
 #[derive(Debug, Clone, Default)]
 pub struct View {
