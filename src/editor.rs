@@ -12,6 +12,25 @@ use crossterm::{
     terminal::{Clear, ClearType, disable_raw_mode, enable_raw_mode, size},
 };
 use std::io::{Write, stdout};
+mod terminal;
+use terminal::Terminal;
+
+pub struct Size {
+    pub height: u16,
+    pub width: u16,
+}
+
+#[derive(Debug, Clone)]
+pub struct Coords {
+    pub x: u16,
+    pub y: u16,
+}
+
+impl Coords {
+    pub fn index() -> Self {
+        Self { x: 0, y: 0 }
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct Editor {
@@ -115,63 +134,6 @@ impl Editor {
         }
 
         self.position = Coords { x, y };
-        Ok(())
-    }
-}
-
-pub struct Size {
-    pub height: u16,
-    pub width: u16,
-}
-
-#[derive(Debug, Clone)]
-pub struct Coords {
-    pub x: u16,
-    pub y: u16,
-}
-
-impl Coords {
-    pub fn index() -> Self {
-        Self { x: 0, y: 0 }
-    }
-}
-
-struct Terminal {}
-impl Terminal {
-    pub fn clear_line() -> Result<()> {
-        queue!(stdout(), Clear(ClearType::CurrentLine))?;
-        Ok(())
-    }
-    pub fn clear_screen() -> Result<()> {
-        execute!(stdout(), Clear(ClearType::All))?;
-        Ok(())
-    }
-    pub fn move_cursor_to(position: Coords) -> Result<()> {
-        let Coords { x, y } = position;
-        execute!(stdout(), MoveTo(x, y))?;
-        Ok(())
-    }
-    pub fn size() -> Result<Size> {
-        let (width, height) = size()?;
-        let size = Size { height, width };
-        Ok(size)
-    }
-
-    pub fn hide_cursor() -> Result<()> {
-        queue!(stdout(), Hide)?;
-        Ok(())
-    }
-    pub fn show_cursor() -> Result<()> {
-        queue!(stdout(), Show)?;
-        Ok(())
-    }
-
-    pub fn print(string: &str) -> Result<()> {
-        queue!(stdout(), Print(string))?;
-        Ok(())
-    }
-    pub fn execute() -> Result<()> {
-        stdout().flush()?;
         Ok(())
     }
 }
