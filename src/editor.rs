@@ -103,17 +103,17 @@ impl Editor {
         Ok(())
     }
 
-    fn draw_tildes(&self) -> Result<()> {
-        let Size { height, width: _w } = Terminal::size()?;
-        for current_row in 0..height {
-            Terminal::clear_line()?;
-            print!("~");
-            if current_row + 1 < height {
-                print!("\r\n");
-            }
-        }
-        Ok(())
-    }
+    // fn draw_tildes(&self) -> Result<()> {
+    //     let Size { height, width: _w } = Terminal::size()?;
+    //     for current_row in 0..height {
+    //         Terminal::clear_line()?;
+    //         print!("~");
+    //         if current_row + 1 < height {
+    //             print!("\r\n");
+    //         }
+    //     }
+    //     Ok(())
+    // }
 
     fn move_point(&mut self, keycode: KeyCode) -> Result<()> {
         let Coords { mut x, mut y } = self.position;
