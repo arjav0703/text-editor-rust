@@ -14,6 +14,8 @@ use crossterm::{
 use std::io::{Write, stdout};
 mod terminal;
 use terminal::Terminal;
+mod view;
+use view::View;
 
 pub struct Size {
     pub height: u16,
@@ -90,7 +92,7 @@ impl Editor {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye!\n")?;
         } else {
-            self.draw_tildes()?;
+            View::render()?;
             Terminal::move_cursor_to(Coords {
                 x: self.position.x,
                 y: self.position.y,
