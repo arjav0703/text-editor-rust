@@ -1,6 +1,7 @@
 mod editor;
+use editor::Editor;
 
 fn main() {
-    let mut editor = editor::Editor::new();
+    let mut editor = Editor::default();
     editor.run().unwrap();
 }

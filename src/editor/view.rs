@@ -1,21 +1,29 @@
 use super::*;
 
-pub struct View {}
+#[derive(Debug, Clone, Default)]
+pub struct View {
+    pub buffer: Buffer,
+}
 
 impl View {
-    pub fn render() -> Result<()> {
+    pub fn render(&self) -> Result<()> {
         let Size { height, .. } = Terminal::size()?;
-        Terminal::clear_line()?;
-        Terminal::print("Hello, World!\r\n")?;
+        let buf_len = self.buffer.content.len();
 
-        for current_row in 1..height {
+        for current_row in 0..height {
             Terminal::clear_line()?;
 
-            if current_row == height / 3 {
-                Self::render_welcome_message()?;
+            if (current_row as usize) < buf_len {
+                let line = &self.buffer.content[current_row as usize];
+                Terminal::print(line)?;
             } else {
-                Self::render_empty_row()?;
+                if current_row == height / 3 && buf_len == 0 {
+                    Self::render_welcome_message()?;
+                } else {
+                    Self::render_empty_row()?;
+                }
             }
+
             if current_row.saturating_add(1) < height {
                 Terminal::print("\r\n")?;
             }

@@ -17,6 +17,10 @@ use terminal::Terminal;
 mod view;
 use view::View;
 
+#[derive(Debug, Clone, Default)]
+pub struct Buffer {
+    pub content: Vec<String>,
+}
 pub struct Size {
     pub height: u16,
     pub width: u16,
@@ -36,18 +40,30 @@ impl Coords {
 
 #[derive(Debug, Clone)]
 pub struct Editor {
-    running: bool,
-    position: Coords,
+    pub running: bool,
+    pub position: Coords,
+    pub buffer: Buffer,
+    pub view: View,
 }
 
-impl Editor {
-    pub fn new() -> Self {
+impl Default for Editor {
+    fn default() -> Self {
+        let test_buffer = Buffer {
+            content: vec!["Hello, World!".to_string()],
+        };
+
         Self {
             running: true,
             position: Coords::index(),
+            buffer: test_buffer.clone(),
+            view: View {
+                buffer: test_buffer,
+            },
         }
     }
+}
 
+impl Editor {
     pub fn run(&mut self) -> Result<()> {
         Terminal::clear_screen()?;
         enable_raw_mode()?;
@@ -92,7 +108,7 @@ impl Editor {
             Terminal::clear_screen()?;
             Terminal::print("Goodbye!\n")?;
         } else {
-            View::render()?;
+            self.view.render()?;
             Terminal::move_cursor_to(Coords {
                 x: self.position.x,
                 y: self.position.y,

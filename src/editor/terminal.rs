@@ -38,9 +38,4 @@ impl Terminal {
         stdout().flush()?;
         Ok(())
     }
-    pub fn pring(string: &str) -> Result<()> {
-        Terminal::print(string)?;
-        // Terminal::execute()?;
-        Ok(())
-    }
 }
