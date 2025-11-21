@@ -49,12 +49,10 @@ impl View {
                 } else {
                     Self::render_line(current_row.into(), line)?;
                 }
+            } else if current_row == height / 3 && buf_len == 0 {
+                Self::render_welcome_message()?;
             } else {
-                if current_row == height / 3 && buf_len == 0 {
-                    Self::render_welcome_message()?;
-                } else {
-                    Self::render_empty_row()?;
-                }
+                Self::render_empty_row()?;
             }
 
             if current_row.saturating_add(1) < height {
@@ -106,9 +104,30 @@ impl View {
 
         match direction {
             Direction::Up => {
+                if let Some(upper_line) = self.buffer.content.get(y.saturating_sub(1) as usize) {
+                    let upper_line_length = upper_line.len() as u16;
+                    if x > upper_line_length {
+                        x = upper_line_length;
+                    }
+                }
                 y = y.saturating_sub(1);
             }
             Direction::Down => {
+                let is_at_bottom = self
+                    .buffer
+                    .content
+                    .get(y.saturating_add(1) as usize)
+                    .is_none();
+                if is_at_bottom {
+                    return;
+                }
+
+                if let Some(lower_line) = self.buffer.content.get(y.saturating_add(1) as usize) {
+                    let lower_line_length = lower_line.len() as u16;
+                    if x > lower_line_length {
+                        x = lower_line_length;
+                    }
+                }
                 y = y.saturating_add(1);
             }
             Direction::Left => {
