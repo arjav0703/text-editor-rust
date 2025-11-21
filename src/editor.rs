@@ -14,12 +14,17 @@ use view::{Coords, View, buffer::Buffer};
 mod command;
 use command::EditorCommand;
 
+#[derive(Debug, Clone)]
 pub struct Size {
     pub height: u16,
     pub width: u16,
 }
+impl Default for Size {
+    fn default() -> Self {
+        Terminal::size().unwrap_or_default()
+    }
+}
 
-#[derive(Debug, Clone)]
 pub struct Editor {
     pub running: bool,
     pub view: View,
@@ -36,6 +41,8 @@ impl Default for Editor {
             view: View {
                 buffer: test_buffer,
                 position: Coords::index(),
+                size: Size::default(),
+                scroll_offset: Coords::index(),
             },
         }
     }

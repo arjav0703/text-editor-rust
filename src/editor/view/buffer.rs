@@ -1,4 +1,5 @@
 use anyhow::Result;
+use std::ops::Range;
 
 #[derive(Debug, Clone, Default)]
 pub struct Buffer {
@@ -17,5 +18,20 @@ impl Buffer {
             .collect();
 
         Ok(Buffer { content })
+    }
+
+    pub fn get(&self, range: Range<usize>) -> String {
+        let mut result = String::new();
+        for i in range {
+            if let Some(line) = self.content.get(i) {
+                if !result.is_empty() {
+                    result.push('\n');
+                }
+                result.push_str(line);
+            } else {
+                break;
+            }
+        }
+        result
     }
 }

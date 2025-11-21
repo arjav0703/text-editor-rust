@@ -24,19 +24,31 @@ impl Default for Coords {
 pub struct View {
     pub buffer: Buffer,
     pub position: Coords,
+    pub size: Size,
+    pub scroll_offset: Coords,
 }
 
 impl View {
     pub fn render(&self) -> Result<()> {
-        let Size { height, .. } = Terminal::size()?;
+        let Size { height, width } = Terminal::size()?;
         let buf_len = self.buffer.content.len();
+        let top = self.scroll_offset.y;
 
         for current_row in 0..height {
             Terminal::clear_line()?;
 
-            if (current_row as usize) < buf_len {
-                let line = &self.buffer.content[current_row as usize];
-                Terminal::print(line)?;
+            if let Some(line) = self
+                .buffer
+                .content
+                .get(current_row.saturating_add(top) as usize)
+            {
+                let left = self.scroll_offset.x as usize;
+                let right = (self.scroll_offset.x.saturating_add(width)) as usize;
+                if let Some(slice) = line.get(left..right) {
+                    Self::render_line(current_row.into(), slice)?;
+                } else {
+                    Self::render_line(current_row.into(), line)?;
+                }
             } else {
                 if current_row == height / 3 && buf_len == 0 {
                     Self::render_welcome_message()?;
@@ -49,6 +61,11 @@ impl View {
                 Terminal::print("\r\n")?;
             }
         }
+        Ok(())
+    }
+
+    fn render_line(_at: usize, line_text: &str) -> Result<()> {
+        Terminal::print(line_text)?;
         Ok(())
     }
 
@@ -85,31 +102,46 @@ impl View {
     }
 
     fn move_cursor(&mut self, direction: Direction) {
-        let Size { height, width } = Terminal::size().unwrap_or(Size {
+        let Coords { mut x, mut y } = self.position;
+
+        match direction {
+            Direction::Up => {
+                y = y.saturating_sub(1);
+            }
+            Direction::Down => {
+                y = y.saturating_add(1);
+            }
+            Direction::Left => {
+                x = x.saturating_sub(1);
+            }
+            Direction::Right => {
+                x = x.saturating_add(1);
+            }
+        }
+
+        self.position = Coords { x, y };
+        self.scroll_location_into_view();
+    }
+
+    fn scroll_location_into_view(&mut self) {
+        let Coords { x, y } = self.position;
+        let Size { width, height } = Terminal::size().unwrap_or(Size {
             height: 24,
             width: 80,
         });
-        match direction {
-            Direction::Up => {
-                self.position.y = self.position.y.saturating_sub(1);
-            }
-            Direction::Down => {
-                self.position.y = self
-                    .position
-                    .y
-                    .saturating_add(1)
-                    .min(height.saturating_sub(1));
-            }
-            Direction::Left => {
-                self.position.x = self.position.x.saturating_sub(1);
-            }
-            Direction::Right => {
-                self.position.x = self
-                    .position
-                    .x
-                    .saturating_add(1)
-                    .min(width.saturating_sub(1));
-            }
+
+        // Scroll vertically
+        if y < self.scroll_offset.y {
+            self.scroll_offset.y = y;
+        } else if y >= self.scroll_offset.y.saturating_add(height) {
+            self.scroll_offset.y = y.saturating_sub(height).saturating_add(1);
+        }
+
+        // Scroll horizontally
+        if x < self.scroll_offset.x {
+            self.scroll_offset.x = x;
+        } else if x >= self.scroll_offset.x.saturating_add(width) {
+            self.scroll_offset.x = x.saturating_sub(width).saturating_add(1);
         }
     }
 }
