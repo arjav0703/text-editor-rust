@@ -13,7 +13,10 @@ fn main() {
     };
 
     let mut editor = Editor {
-        view: View { buffer },
+        view: View {
+            buffer,
+            ..Default::default()
+        },
         ..Default::default()
     };
 

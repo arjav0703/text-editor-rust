@@ -1,9 +1,29 @@
 use super::*;
+use crate::editor::command::{Direction, EditorCommand};
 pub mod buffer;
+
+#[derive(Debug, Clone)]
+pub struct Coords {
+    pub x: u16,
+    pub y: u16,
+}
+
+impl Coords {
+    pub fn index() -> Self {
+        Self { x: 0, y: 0 }
+    }
+}
+
+impl Default for Coords {
+    fn default() -> Self {
+        Coords::index()
+    }
+}
 
 #[derive(Debug, Clone, Default)]
 pub struct View {
     pub buffer: Buffer,
+    pub position: Coords,
 }
 
 impl View {
@@ -50,5 +70,46 @@ impl View {
     fn render_empty_row() -> Result<()> {
         Terminal::print("~")?;
         Ok(())
+    }
+
+    pub fn handle_command(&mut self, command: EditorCommand) {
+        match command {
+            EditorCommand::Move(direction) => self.move_cursor(direction),
+            EditorCommand::Resize(_new_size) => {
+                // Handle resize if needed
+            }
+            EditorCommand::Quit => {
+                // Handled in Editor
+            }
+        }
+    }
+
+    fn move_cursor(&mut self, direction: Direction) {
+        let Size { height, width } = Terminal::size().unwrap_or(Size {
+            height: 24,
+            width: 80,
+        });
+        match direction {
+            Direction::Up => {
+                self.position.y = self.position.y.saturating_sub(1);
+            }
+            Direction::Down => {
+                self.position.y = self
+                    .position
+                    .y
+                    .saturating_add(1)
+                    .min(height.saturating_sub(1));
+            }
+            Direction::Left => {
+                self.position.x = self.position.x.saturating_sub(1);
+            }
+            Direction::Right => {
+                self.position.x = self
+                    .position
+                    .x
+                    .saturating_add(1)
+                    .min(width.saturating_sub(1));
+            }
+        }
     }
 }
