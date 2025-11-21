@@ -112,10 +112,37 @@ impl View {
                 y = y.saturating_add(1);
             }
             Direction::Left => {
-                x = x.saturating_sub(1);
+                if let Some(line) = self.buffer.content.get(y as usize) {
+                    if (x as usize) > line.len() {
+                        x = x.saturating_sub(1);
+                    } else if x == 0 {
+                        if y == 0 {
+                            return;
+                        }
+                        y = y.saturating_sub(1);
+                        if let Some(prev_line) = self.buffer.content.get(y as usize) {
+                            x = prev_line.len() as u16;
+                        } else {
+                            x = 0;
+                        }
+                    } else {
+                        x = x.saturating_sub(1);
+                    }
+                } else {
+                    x = x.saturating_sub(1);
+                }
             }
             Direction::Right => {
-                x = x.saturating_add(1);
+                if let Some(line) = self.buffer.content.get(y as usize) {
+                    if (x as usize) < line.len() {
+                        x = x.saturating_add(1);
+                    } else {
+                        x = 0;
+                        y = y.saturating_add(1);
+                    }
+                } else {
+                    x = x.saturating_add(1);
+                }
             }
         }
 
