@@ -2,6 +2,7 @@ use super::*;
 use crate::editor::command::{Direction, EditorCommand};
 pub mod buffer;
 use buffer::Buffer;
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug, Clone)]
 pub struct Coords {
@@ -64,8 +65,26 @@ impl View {
     }
 
     fn render_line(_at: usize, line_text: &str) -> Result<()> {
-        Terminal::print(line_text)?;
+        let processed_text = Self::process_text(line_text);
+        Terminal::print(&processed_text)?;
         Ok(())
+    }
+
+    fn process_text(text: &str) -> String {
+        text.graphemes(true)
+            .map(Self::replace_whitespace)
+            .collect()
+    }
+
+    fn replace_whitespace(grapheme: &str) -> &str {
+        match grapheme {
+            " " => " ",
+            "\t" => " ",
+            g if !g.trim().is_empty() => g,
+            g if g.chars().any(|c| c.is_control()) => "▯",
+            g if !g.is_empty() => "␣",
+            _ => "·",
+        }
     }
 
     fn render_welcome_message() -> Result<()> {
