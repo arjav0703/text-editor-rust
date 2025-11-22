@@ -1,5 +1,6 @@
 use anyhow::Result;
 use std::ops::Range;
+use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug, Clone, Default)]
 pub struct Buffer {
@@ -33,5 +34,16 @@ impl Buffer {
             }
         }
         result
+    }
+
+    pub fn get_line_length(&self, line_number: usize) -> usize {
+        let line = self.content.get(line_number);
+        match line {
+            Some(text) => {
+                let graphemes = text.graphemes(true).collect::<Vec<&str>>();
+                graphemes.len()
+            }
+            None => 0,
+        }
     }
 }

@@ -1,6 +1,7 @@
 use super::*;
 use crate::editor::command::{Direction, EditorCommand};
 pub mod buffer;
+use buffer::Buffer;
 
 #[derive(Debug, Clone)]
 pub struct Coords {
@@ -104,8 +105,12 @@ impl View {
 
         match direction {
             Direction::Up => {
-                if let Some(upper_line) = self.buffer.content.get(y.saturating_sub(1) as usize) {
-                    let upper_line_length = upper_line.len() as u16;
+                if let Some(upper_line_len) = self
+                    .buffer
+                    .get_line_length(y.saturating_sub(1) as usize)
+                    .into()
+                {
+                    let upper_line_length = upper_line_len as u16;
                     if x > upper_line_length {
                         x = upper_line_length;
                     }
@@ -122,25 +127,30 @@ impl View {
                     return;
                 }
 
-                if let Some(lower_line) = self.buffer.content.get(y.saturating_add(1) as usize) {
-                    let lower_line_length = lower_line.len() as u16;
-                    if x > lower_line_length {
-                        x = lower_line_length;
+                if let Some(lower_line_len) = self
+                    .buffer
+                    .get_line_length(y.saturating_add(1) as usize)
+                    .into()
+                {
+                    let lower_line_len = lower_line_len as u16;
+                    if x > lower_line_len {
+                        x = lower_line_len;
                     }
                 }
                 y = y.saturating_add(1);
             }
             Direction::Left => {
-                if let Some(line) = self.buffer.content.get(y as usize) {
-                    if (x as usize) > line.len() {
+                if let Some(line_len) = self.buffer.get_line_length(y as usize).into() {
+                    if (x as usize) > line_len {
                         x = x.saturating_sub(1);
                     } else if x == 0 {
                         if y == 0 {
                             return;
                         }
                         y = y.saturating_sub(1);
-                        if let Some(prev_line) = self.buffer.content.get(y as usize) {
-                            x = prev_line.len() as u16;
+                        if let Some(prev_line_len) = self.buffer.get_line_length(y as usize).into()
+                        {
+                            x = prev_line_len as u16;
                         } else {
                             x = 0;
                         }
@@ -152,8 +162,8 @@ impl View {
                 }
             }
             Direction::Right => {
-                if let Some(line) = self.buffer.content.get(y as usize) {
-                    if (x as usize) < line.len() {
+                if let Some(line_len) = self.buffer.get_line_length(y as usize).into() {
+                    if (x as usize) < line_len {
                         x = x.saturating_add(1);
                     } else {
                         x = 0;
