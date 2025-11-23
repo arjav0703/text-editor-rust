@@ -26,7 +26,6 @@ impl Default for Coords {
 pub struct View {
     pub buffer: Buffer,
     pub position: Coords,
-    pub size: Size,
     pub scroll_offset: Coords,
 }
 
@@ -114,7 +113,7 @@ impl View {
                 // Handled in Editor
             }
             EditorCommand::Input(input_type) => {
-                self.handle_input(input_type);
+                let _ = self.handle_input(input_type);
             }
         }
     }
@@ -124,7 +123,6 @@ impl View {
             InputType::Char(c) => self.insert_character(c),
             InputType::Backspace => self.delete_character(),
             InputType::Enter => self.insert_character('\n'),
-            _ => Err(anyhow::anyhow!("Unsupported input type")),
         }
     }
 

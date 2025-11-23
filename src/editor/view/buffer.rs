@@ -1,5 +1,4 @@
 use anyhow::Result;
-use std::ops::Range;
 use unicode_segmentation::UnicodeSegmentation;
 
 #[derive(Debug, Clone, Default)]
@@ -8,10 +7,6 @@ pub struct Buffer {
 }
 
 impl Buffer {
-    pub fn is_empty(&self) -> bool {
-        self.content.is_empty()
-    }
-
     pub fn read_from_file(file: &str) -> Result<Buffer> {
         let content = std::fs::read_to_string(file)?
             .lines()
@@ -27,20 +22,21 @@ impl Buffer {
         Ok(())
     }
 
-    pub fn get(&self, range: Range<usize>) -> String {
-        let mut result = String::new();
-        for i in range {
-            if let Some(line) = self.content.get(i) {
-                if !result.is_empty() {
-                    result.push('\n');
-                }
-                result.push_str(line);
-            } else {
-                break;
-            }
-        }
-        result
-    }
+    // use std::ops::Range;
+    // pub fn get(&self, range: Range<usize>) -> String {
+    //     let mut result = String::new();
+    //     for i in range {
+    //         if let Some(line) = self.content.get(i) {
+    //             if !result.is_empty() {
+    //                 result.push('\n');
+    //             }
+    //             result.push_str(line);
+    //         } else {
+    //             break;
+    //         }
+    //     }
+    //     result
+    // }
 
     pub fn get_mut(&mut self, line_number: usize) -> Option<&mut String> {
         self.content.get_mut(line_number)

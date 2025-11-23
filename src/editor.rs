@@ -42,7 +42,6 @@ impl Default for Editor {
             view: View {
                 buffer: test_buffer,
                 position: Coords::index(),
-                size: Size::default(),
                 scroll_offset: Coords::index(),
             },
             file_path: String::from("untitled.txt"),
@@ -77,21 +76,18 @@ impl Editor {
         };
 
         if should_process {
-            match EditorCommand::try_from(event.clone()) {
-                Ok(command) => {
-                    match command {
-                        EditorCommand::Quit => {
-                            self.running = false;
-                        }
-                        EditorCommand::Save => {
-                            self.view.buffer.write_to_file(&self.file_path)?;
-                        }
-                        _ => {
-                            self.view.handle_command(command);
-                        }
+            if let Ok(command) = EditorCommand::try_from(event.clone()) {
+                match command {
+                    EditorCommand::Quit => {
+                        self.running = false;
+                    }
+                    EditorCommand::Save => {
+                        self.view.buffer.write_to_file(&self.file_path)?;
+                    }
+                    _ => {
+                        self.view.handle_command(command);
                     }
                 }
-                Err(_) => {}
             }
         } else {
             panic!("Received unsupported event.");
