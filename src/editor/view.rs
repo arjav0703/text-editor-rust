@@ -1,5 +1,5 @@
 use super::*;
-use crate::editor::command::{Direction, EditorCommand};
+use crate::editor::command::{Direction, EditorCommand, InputType};
 pub mod buffer;
 use buffer::Buffer;
 use unicode_segmentation::UnicodeSegmentation;
@@ -113,13 +113,45 @@ impl View {
             EditorCommand::Save => {
                 // Handled in Editor
             }
-            EditorCommand::Input(c) => {
-                self.handle_input(c);
+            EditorCommand::Input(input_type) => {
+                self.handle_input(input_type);
             }
         }
     }
 
-    pub fn handle_input(&mut self, input: char) {
+    pub fn handle_input(&mut self, input_type: InputType) -> Result<()> {
+        match input_type {
+            InputType::Char(c) => self.insert_character(c),
+            InputType::Backspace => self.delete_character(),
+            InputType::Enter => self.insert_character('\n'),
+            _ => Err(anyhow::anyhow!("Unsupported input type")),
+        }
+    }
+
+    fn delete_character(&mut self) -> Result<()> {
+        if self.position.x == 0 && self.position.y == 0 {
+            return Ok(());
+        }
+
+        self.move_cursor(Direction::Left);
+        if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
+            let graphemes: Vec<&str> = line.graphemes(true).collect();
+            let delete_pos = self.position.x as usize;
+
+            if delete_pos < graphemes.len() {
+                let mut new_line = String::new();
+                for (i, g) in graphemes.iter().enumerate() {
+                    if i != delete_pos {
+                        new_line.push_str(g);
+                    }
+                }
+                *line = new_line;
+            }
+        }
+        Ok(())
+    }
+
+    fn insert_character(&mut self, c: char) -> Result<()> {
         if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
             let graphemes: Vec<&str> = line.graphemes(true).collect();
             let insert_pos = self.position.x as usize;
@@ -127,21 +159,22 @@ impl View {
             let mut new_line = String::new();
             for (i, g) in graphemes.iter().enumerate() {
                 if i == insert_pos {
-                    new_line.push(input);
+                    new_line.push(c);
                 }
                 new_line.push_str(g);
             }
             if insert_pos >= graphemes.len() {
-                new_line.push(input);
+                new_line.push(c);
             }
 
             *line = new_line;
             self.move_cursor(Direction::Right);
-        } else if input == '\n' {
+        } else if c == '\n' {
             self.buffer.content.push(String::new());
             self.position.x = 0;
             self.position.y += 1;
         }
+        Ok(())
     }
 
     fn move_cursor(&mut self, direction: Direction) {
