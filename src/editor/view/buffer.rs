@@ -21,6 +21,12 @@ impl Buffer {
         Ok(Buffer { content })
     }
 
+    pub fn write_to_file(&self, file: &str) -> Result<()> {
+        let content = self.content.join("\n");
+        std::fs::write(file, content)?;
+        Ok(())
+    }
+
     pub fn get(&self, range: Range<usize>) -> String {
         let mut result = String::new();
         for i in range {
@@ -34,6 +40,10 @@ impl Buffer {
             }
         }
         result
+    }
+
+    pub fn get_mut(&mut self, line_number: usize) -> Option<&mut String> {
+        self.content.get_mut(line_number)
     }
 
     pub fn get_line_length(&self, line_number: usize) -> usize {

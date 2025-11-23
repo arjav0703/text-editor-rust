@@ -71,9 +71,7 @@ impl View {
     }
 
     fn process_text(text: &str) -> String {
-        text.graphemes(true)
-            .map(Self::replace_whitespace)
-            .collect()
+        text.graphemes(true).map(Self::replace_whitespace).collect()
     }
 
     fn replace_whitespace(grapheme: &str) -> &str {
@@ -110,12 +108,39 @@ impl View {
     pub fn handle_command(&mut self, command: EditorCommand) {
         match command {
             EditorCommand::Move(direction) => self.move_cursor(direction),
-            EditorCommand::Resize(_new_size) => {
-                // Handle resize if needed
-            }
-            EditorCommand::Quit => {
+            EditorCommand::Resize(_new_size) => {}
+            EditorCommand::Quit => {}
+            EditorCommand::Save => {
                 // Handled in Editor
             }
+            EditorCommand::Input(c) => {
+                self.handle_input(c);
+            }
+        }
+    }
+
+    pub fn handle_input(&mut self, input: char) {
+        if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
+            let graphemes: Vec<&str> = line.graphemes(true).collect();
+            let insert_pos = self.position.x as usize;
+
+            let mut new_line = String::new();
+            for (i, g) in graphemes.iter().enumerate() {
+                if i == insert_pos {
+                    new_line.push(input);
+                }
+                new_line.push_str(g);
+            }
+            if insert_pos >= graphemes.len() {
+                new_line.push(input);
+            }
+
+            *line = new_line;
+            self.move_cursor(Direction::Right);
+        } else if input == '\n' {
+            self.buffer.content.push(String::new());
+            self.position.x = 0;
+            self.position.y += 1;
         }
     }
 

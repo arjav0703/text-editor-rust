@@ -13,7 +13,9 @@ pub enum Direction {
 pub enum EditorCommand {
     Move(Direction),
     Resize(Size),
+    Input(char),
     Quit,
+    Save,
 }
 
 impl TryFrom<Event> for EditorCommand {
@@ -24,10 +26,14 @@ impl TryFrom<Event> for EditorCommand {
                 code, modifiers, ..
             }) => match (code, modifiers) {
                 (KeyCode::Char('q'), KeyModifiers::CONTROL) => Ok(Self::Quit),
+                (KeyCode::Char('s'), KeyModifiers::CONTROL) => Ok(Self::Save),
                 (KeyCode::Up, _) => Ok(Self::Move(Direction::Up)),
                 (KeyCode::Down, _) => Ok(Self::Move(Direction::Down)),
                 (KeyCode::Left, _) => Ok(Self::Move(Direction::Left)),
                 (KeyCode::Right, _) => Ok(Self::Move(Direction::Right)),
+                (KeyCode::Char(character), KeyModifiers::NONE | KeyModifiers::SHIFT) => {
+                    Ok(Self::Input(character))
+                }
                 _ => Err(format!("Key Code not supported: {code:?}")),
             },
             Event::Resize(width_u16, height_u16) => {

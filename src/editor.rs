@@ -28,6 +28,7 @@ impl Default for Size {
 pub struct Editor {
     pub running: bool,
     pub view: View,
+    pub file_path: String,
 }
 
 impl Default for Editor {
@@ -44,6 +45,7 @@ impl Default for Editor {
                 size: Size::default(),
                 scroll_offset: Coords::index(),
             },
+            file_path: String::from("untitled.txt"),
         }
     }
 }
@@ -77,10 +79,16 @@ impl Editor {
         if should_process {
             match EditorCommand::try_from(event.clone()) {
                 Ok(command) => {
-                    if matches!(command, EditorCommand::Quit) {
-                        self.running = false;
-                    } else {
-                        self.view.handle_command(command);
+                    match command {
+                        EditorCommand::Quit => {
+                            self.running = false;
+                        }
+                        EditorCommand::Save => {
+                            self.view.buffer.write_to_file(&self.file_path)?;
+                        }
+                        _ => {
+                            self.view.handle_command(command);
+                        }
                     }
                 }
                 Err(_) => {}
