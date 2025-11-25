@@ -121,35 +121,62 @@ impl View {
     pub fn handle_input(&mut self, input_type: InputType) -> Result<()> {
         match input_type {
             InputType::Char(c) => self.insert_character(c),
-            InputType::Backspace => self.delete_character(),
+            InputType::Backspace => self.handle_backspace(),
             InputType::Enter => self.insert_character('\n'),
         }
     }
 
-    fn delete_character(&mut self) -> Result<()> {
+    fn handle_backspace(&mut self) -> Result<()> {
+        // start of file
         if self.position.x == 0 && self.position.y == 0 {
             return Ok(());
         }
 
-        self.move_cursor(Direction::Left);
-        if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
-            let graphemes: Vec<&str> = line.graphemes(true).collect();
-            let delete_pos = self.position.x as usize;
-
-            if delete_pos < graphemes.len() {
-                let mut new_line = String::new();
-                for (i, g) in graphemes.iter().enumerate() {
-                    if i != delete_pos {
-                        new_line.push_str(g);
-                    }
+        // start of line
+        if self.position.x == 0 {
+            let current_line_idx = self.position.y as usize;
+            
+            if let Some(current_line) = self.buffer.content.get(current_line_idx).cloned() {
+                if let Some(prev_line) = self.buffer.get_mut(current_line_idx - 1) {
+                    let prev_line_len = prev_line.graphemes(true).count();
+                    
+                    prev_line.push_str(&current_line);
+                    
+                    self.buffer.content.remove(current_line_idx);
+                    
+                    self.position.y -= 1;
+                    self.position.x = prev_line_len as u16;
+                    self.scroll_location_into_view();
                 }
-                *line = new_line;
+            }
+        } else {
+            // Delete character at current position
+            if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
+                let graphemes: Vec<&str> = line.graphemes(true).collect();
+                let delete_pos = (self.position.x - 1) as usize;
+
+                if delete_pos < graphemes.len() {
+                    let mut new_line = String::new();
+                    for (i, g) in graphemes.iter().enumerate() {
+                        if i != delete_pos {
+                            new_line.push_str(g);
+                        }
+                    }
+                    *line = new_line;
+                    self.position.x -= 1;
+                    self.scroll_location_into_view();
+                }
             }
         }
+        
         Ok(())
     }
 
     fn insert_character(&mut self, c: char) -> Result<()> {
+        if c == '\n' {
+            return self.insert_newline();
+        }
+
         if let Some(line) = self.buffer.get_mut(self.position.y as usize) {
             let graphemes: Vec<&str> = line.graphemes(true).collect();
             let insert_pos = self.position.x as usize;
@@ -167,11 +194,31 @@ impl View {
 
             *line = new_line;
             self.move_cursor(Direction::Right);
-        } else if c == '\n' {
-            self.buffer.content.push(String::new());
-            self.position.x = 0;
-            self.position.y += 1;
         }
+        Ok(())
+    }
+
+    fn insert_newline(&mut self) -> Result<()> {
+        let current_line_idx = self.position.y as usize;
+
+        if let Some(line) = self.buffer.get_mut(current_line_idx) {
+            let graphemes: Vec<&str> = line.graphemes(true).collect();
+            let split_pos = self.position.x as usize;
+
+            // Split the line at cursor position
+            let before: String = graphemes.iter().take(split_pos).map(|s| *s).collect();
+            let after: String = graphemes.iter().skip(split_pos).map(|s| *s).collect();
+
+            *line = before;
+            self.buffer.content.insert(current_line_idx + 1, after);
+        } else {
+            self.buffer.content.push(String::new());
+        }
+
+        self.position.x = 0;
+        self.position.y += 1;
+        self.scroll_location_into_view();
+
         Ok(())
     }
 
